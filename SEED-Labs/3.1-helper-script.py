@@ -6,9 +6,9 @@ To run it, have a directory with only the compiled CacheTime.c file in it (we'll
 Compile CacheTime.c with: gcc -march=native CacheTime.c -o <any name you want>
 
 Run this script with the following syntax:
-    ./threshold.py <path/to/working/dir (can be a relative path)> <number of times to run compiled CacheTime.c> <name of compiled CacheTime.c>
+    ./3.1-helper-script.py <path/to/working/dir (can be a relative path)> <number of times to run compiled CacheTime.c> <name of compiled CacheTime.c>
 Example:
-    ./threshold.py ../cache-times/ 10000 CacheTime
+    ./3.1-helper-script.py ../cache-times/ 10000 CacheTime
     Here is what ../cache-times/ looks like in the above example:
         cache-times/
         └── CacheTime
