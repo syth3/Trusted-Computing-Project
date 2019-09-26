@@ -1,2 +1,3 @@
 https://github.com/crozone/SpectrePoC
   https://techantidote.com/spectre-vulnerability-proof-concept/
+https://github.com/tbodt/spectre
