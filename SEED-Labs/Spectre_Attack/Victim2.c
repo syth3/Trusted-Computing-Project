@@ -134,12 +134,18 @@ void func(int sockfd)
   	read(sockfd, buff, sizeof(buff));
   	// print buffer which contains the client contents 
   	sscanf(buff, "%d", &m);         
-  	//printf("Client sent: %d\n", m); 
+
+	// Zero out the buffer
   	bzero(buff, MAX);
   	n = 0;
+
+	//Flush the chache
         flushSideChannel();
+
+	//Access array at index (m)
+	//Attacker will train and then do malicious boy
   	n = restrictedAccess(m);	
-        //printf("Checking cachetime for %d\n", m);
+	//Check the chace for characters  between 'a' and 'f'
         printf("HERE");
         for(int i = 97; i < 103; i++){
           checkCache(i);
@@ -168,6 +174,8 @@ void func(int sockfd)
 
 
 int main() {
+  /* Memory leaking exploit give the address of the private key, public key, 
+  and the difference between them */
   printf("Memory address leaking exploit\n");
   printf("secret %p\n", privkey);
   printf("buffer %p\n", pubkey);
@@ -176,6 +184,8 @@ int main() {
   int sockfd, connfd, len;
   struct sockaddr_in servaddr, cli;
 
+
+  /* Run our network service */
   while(1){
     // socket create and verification 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -218,6 +228,7 @@ int main() {
     }
     else
   	printf("server acccept the client...\n");
+    /* malicious funciton for the attack*/
     func(connfd);
   }
   close(sockfd);
