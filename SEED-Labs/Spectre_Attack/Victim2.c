@@ -18,8 +18,10 @@
 
 unsigned int size = 10;
 uint8_t pubkey[10] = {0,1,2,3,4,5,6,7,8,9}; 
-char *privkey = "sshpassword123";   
+char *privkey = "a";   
 uint8_t array[256*4096];
+uint8_t scores[256];
+
 
 #define CACHE_HIT_THRESHOLD (200)
 #define DELTA 1024
@@ -37,6 +39,38 @@ uint8_t restrictedAccess(size_t x)
 }
 
 
+void flushSideChannel()
+{
+  int i;
+  // Write to array to bring it to RAM to prevent Copy-on-write
+  for (i = 0; i < 256; i++) array[i*4096 + DELTA] = 1;
+  //flush the values of the array from cache
+  for (i = 0; i < 256; i++) _mm_clflush(&array[i*4096 +DELTA]);
+}
+
+
+void reloadSideChannel()
+{ 
+  int junk=0;
+  register uint64_t time1, time2;
+  volatile uint8_t *addr;
+  int i;
+  for(i = 32; i < 126; i++){
+    addr = &array[i*4096 + DELTA];
+    time1 = __rdtscp(&junk);
+    junk = *addr;
+    time2 = __rdtscp(&junk) - time1;
+    if(i == 115){
+      //printf("%lld\n", time2);
+    }
+    if (time2 <= CACHE_HIT_THRESHOLD && i != 0){
+      //printf("(%d) %lld\n", i, time2);
+      scores[i]++;
+    }
+  }
+}
+
+
 void checkCache(int x){
   // Initialize the array
   int junk=0;
@@ -44,19 +78,23 @@ void checkCache(int x){
   volatile uint8_t *addr;
   int i;
   
-  for(i=0; i<10; i++) array[i*4096]=1;
+  //for(i=0; i<10; i++) array[i*4096]=1;
   // FLUSH the array from the CPU cache
-  for(i=0; i<10; i++) _mm_clflush(&array[i*4096]);
+  //for(i=0; i<10; i++) _mm_clflush(&array[i*4096]);
   // Access some of the array items
-  int a = pubkey[x];
-  array[a*4096] = 100;
-  for(i=0; i<10; i++) {
-    addr = &array[i*4096];
-    time1 = __rdtscp(&junk);
-    junk = *addr;
-    time2 = __rdtscp(&junk) - time1;
+  //int a = pubkey[x];
+  int a = x;
+  //array[a*4096] = 100;
+  addr = &array[i*4096];
+  time1 = __rdtscp(&junk);
+  junk = *addr;
+  time2 = __rdtscp(&junk) - time1;
+  printf("checkCache(%d)\n", x);
+  //printf("Access time for array[%d*4096]: %d CPU cycles\n",i, (int)time2);
+  if (time2 <= CACHE_HIT_THRESHOLD && x != 0){
     printf("Access time for array[%d*4096]: %d CPU cycles\n",i, (int)time2);
   }
+  flushSideChannel();
 }
 
 void checkCacheTime(){
@@ -99,10 +137,14 @@ void func(int sockfd)
   	//printf("Client sent: %d\n", m); 
   	bzero(buff, MAX);
   	n = 0;
-
+        flushSideChannel();
   	n = restrictedAccess(m);	
         //printf("Checking cachetime for %d\n", m);
-        checkCache(m);
+        printf("HERE");
+        for(int i = 97; i < 103; i++){
+          checkCache(i);
+        }
+        //reloadSideChannel();
         //checkCacheTime();
   	sprintf(buff, "%d", n);
   	m = 0;
@@ -113,8 +155,15 @@ void func(int sockfd)
   	write(sockfd, '\n', 1);
 
   	bzero(buff, MAX);
+      /* 
+        int max = 0; 
+        for(int j = 0; j < 256; j++){
+        if(scores[max] < scores[j]){
+          max = j;
+        }
+        printf("%c\n", max);*/
+    }
 
-  }
 }
 
 
