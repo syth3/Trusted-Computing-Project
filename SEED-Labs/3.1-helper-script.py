@@ -9,7 +9,7 @@ Run this script with the following syntax:
     ./3.1-helper-script.py <path/to/working/dir (can be a relative path)> <number of times to run compiled CacheTime.c> <name of compiled CacheTime.c>
 Example:
     ./3.1-helper-script.py cache-times/ 10000 CacheTime
-    Here is what ../cache-times/ looks like in the above example:
+    Here is what cache-times/ looks like in the above example:
         cache-times/
         └── CacheTime
 """
